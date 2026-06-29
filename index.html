@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tushiri</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="game-shell">
+    <div class="score-board" id="scoreBoard">
+      <div>Score: <span id="score">0</span></div>
+      <div>Best: <span id="highScore">0</span></div>
+    </div>
+    <div class="overlay" id="overlay">
+      <h1>Tushiri</h1>
+      <p id="message">Tap or click to start</p>
+      <button id="startButton">Start Game</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
