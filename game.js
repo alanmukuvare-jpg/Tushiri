@@ -8,9 +8,9 @@ const messageElement = document.getElementById('message');
 
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
-const GRAVITY = 0.48; // slightly reduced gravity for gentler fall
-const FLAP_STRENGTH = -8; // full flap strength (used for double-tap)
-const FLAP_WEAK = -5; // weaker flap for single-tap (reduced tap height)
+const GRAVITY = 0.52; // slightly reduced gravity for gentler fall
+const FLAP_STRENGTH = -10; // full flap strength (used for double-tap)
+const FLAP_WEAK = -7; // weaker flap for single-tap
 const PIPE_SPEED = 1.9; // slower horizontal pipe speed for easier start
 const PIPE_GAP = 180; // slightly larger gap to make passing easier
 const PIPE_WIDTH = 70;
