@@ -114,6 +114,13 @@ function toggleMute() {
   updateMuteButton();
 }
 
+function setControlsVisible(visible) {
+  const muteBtn = document.getElementById('muteButton');
+  const pauseBtn = document.getElementById('pauseButton');
+  if (muteBtn) muteBtn.style.display = visible ? 'inline-block' : 'none';
+  if (pauseBtn) pauseBtn.style.display = visible ? 'inline-block' : 'none';
+}
+
 function loadPlayCount() {
   try {
     playCount = Number(localStorage.getItem('tushiriPlayCount') || 0);
@@ -143,11 +150,15 @@ function togglePause() {
     if (animationId) cancelAnimationFrame(animationId);
     overlay.style.display = 'grid';
     messageElement.textContent = 'Paused - Tap to resume';
+    // show controls when paused
+    setControlsVisible(true);
   } else {
     // resume
     isPaused = false;
     overlay.style.display = 'none';
     messageElement.textContent = '';
+    // hide mute/pause during active gameplay
+    setControlsVisible(false);
     gameLoop();
   }
 }
@@ -188,6 +199,8 @@ function resetGame() {
       speed: 0.4 + Math.random() * 0.6,
     });
   }
+  // show controls on the ready screen
+  setControlsVisible(true);
 }
 
 function loadHighScore() {
@@ -216,6 +229,8 @@ function flap() {
   if (gameState === 'ready') {
     gameState = 'playing';
     overlay.style.display = 'none';
+    // hide mute/pause during active gameplay
+    setControlsVisible(false);
     // record a play
     playCount += 1;
     savePlayCount();
@@ -269,6 +284,8 @@ function update() {
       overlay.style.display = 'grid';
       messageElement.textContent = 'Game Over - Tap to retry';
       playCrashSound();
+      // reveal controls again on game over
+      setControlsVisible(true);
     }
   }
 }
