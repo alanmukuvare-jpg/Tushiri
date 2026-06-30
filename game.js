@@ -29,7 +29,6 @@ let animationId = null;
 let audioContext = null;
 let soundInitialized = false;
 let isMuted = false;
-let isPaused = false;
 let playCount = 0;
 
 function initAudio() {
@@ -116,9 +115,7 @@ function toggleMute() {
 
 function setControlsVisible(visible) {
   const muteBtn = document.getElementById('muteButton');
-  const pauseBtn = document.getElementById('pauseButton');
   if (muteBtn) muteBtn.style.display = visible ? 'inline-block' : 'none';
-  if (pauseBtn) pauseBtn.style.display = visible ? 'inline-block' : 'none';
 }
 
 function loadPlayCount() {
@@ -434,8 +431,6 @@ loadMuteSetting();
 updateMuteButton();
 const muteBtn = document.getElementById('muteButton');
 if (muteBtn) muteBtn.addEventListener('click', () => toggleMute());
-const pauseBtn = document.getElementById('pauseButton');
-if (pauseBtn) pauseBtn.addEventListener('click', () => togglePause());
 loadPlayCount();
 updatePlayCountDisplay();
 resetGame();
