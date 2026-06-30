@@ -9,8 +9,7 @@ const messageElement = document.getElementById('message');
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
 const GRAVITY = 0.52; // slightly reduced gravity for gentler fall
-const FLAP_STRENGTH = -10; // full flap strength (used for double-tap)
-const FLAP_WEAK = -7; // weaker flap for single-tap
+const FLAP_STRENGTH = -10; // standard flap strength for all taps
 const PIPE_SPEED = 1.9; // slower horizontal pipe speed for easier start
 const PIPE_GAP = 180; // slightly larger gap to make passing easier
 const PIPE_WIDTH = 70;
@@ -26,7 +25,6 @@ let highScore = 0;
 let frame = 0;
 let gameState = 'ready';
 let lastTap = 0;
-let tapTimer = null;
 let animationId = null;
 let audioContext = null;
 let soundInitialized = false;
@@ -219,7 +217,7 @@ function spawnPipe() {
   pipes.push({ x: GAME_WIDTH, top: topHeight, passed: false });
 }
 
-function flap(strong = false) {
+function flap() {
   if (gameState === 'over') {
     resetGame();
     return;
@@ -236,7 +234,7 @@ function flap(strong = false) {
     updatePlayCountDisplay();
   }
 
-  bird.velocity = strong ? FLAP_STRENGTH : FLAP_WEAK;
+  bird.velocity = FLAP_STRENGTH;
   playFlapSound();
 }
 
@@ -403,21 +401,11 @@ function gameLoop() {
 }
 
 function handleInput(event) {
-  const DOUBLE_THRESHOLD = 240; // ms to consider a double-tap
   initAudio();
-  if (tapTimer) {
-    // second tap within threshold -> double tap
-    clearTimeout(tapTimer);
-    tapTimer = null;
-    lastTap = 0;
-    flap(true);
-  } else {
-    // wait to see if another tap arrives
-    tapTimer = setTimeout(() => {
-      tapTimer = null;
-      flap(false);
-    }, DOUBLE_THRESHOLD);
-  }
+  const isRecentTap = performance.now() - lastTap < 80;
+  lastTap = performance.now();
+  if (isRecentTap) return;
+  flap();
 }
 
 window.addEventListener('resize', setCanvasSize);
@@ -426,13 +414,13 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 startButton.addEventListener('click', () => {
   initAudio();
-  flap(false);
+  flap();
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.code === 'Space' || event.code === 'ArrowUp') {
     initAudio();
-    flap(false);
+    flap();
   }
 });
 
