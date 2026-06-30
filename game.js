@@ -8,12 +8,12 @@ const messageElement = document.getElementById('message');
 
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
-const GRAVITY = 0.6;
-const FLAP_STRENGTH = -11;
-const PIPE_SPEED = 3.2;
-const PIPE_GAP = 150;
+const GRAVITY = 0.52; // slightly reduced gravity for gentler fall
+const FLAP_STRENGTH = -10; // slightly weaker flap for slower vertical movement
+const PIPE_SPEED = 2.3; // slower horizontal pipe speed to slow gameplay
+const PIPE_GAP = 170; // larger gap to balance slower speed
 const PIPE_WIDTH = 70;
-const PIPE_SPACING = 190;
+const PIPE_SPACING = 220; // increased spacing so pipes appear less frequently
 const FLOOR_HEIGHT = 0;
 const CLOUD_COUNT = 6;
 
@@ -28,6 +28,9 @@ let lastTap = 0;
 let animationId = null;
 let audioContext = null;
 let soundInitialized = false;
+let isMuted = false;
+let isPaused = false;
+let playCount = 0;
 
 function initAudio() {
   if (soundInitialized) return;
@@ -36,6 +39,7 @@ function initAudio() {
 }
 
 function playTone(freq, duration = 0.12, type = 'sine', volume = 0.18) {
+  if (isMuted) return;
   if (!soundInitialized || !audioContext) return;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
@@ -50,6 +54,7 @@ function playTone(freq, duration = 0.12, type = 'sine', volume = 0.18) {
 }
 
 function playNoise(duration = 0.2, volume = 0.25) {
+  if (isMuted) return;
   if (!soundInitialized || !audioContext) return;
   const bufferSize = audioContext.sampleRate * duration;
   const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
@@ -78,6 +83,73 @@ function playScoreSound() {
 
 function playCrashSound() {
   playNoise(0.18, 0.25);
+}
+
+function loadMuteSetting() {
+  try {
+    isMuted = localStorage.getItem('tushiriMuted') === '1';
+  } catch (e) {
+    isMuted = false;
+  }
+}
+
+function saveMuteSetting() {
+  try {
+    localStorage.setItem('tushiriMuted', isMuted ? '1' : '0');
+  } catch (e) {
+    // ignore
+  }
+}
+
+function updateMuteButton() {
+  const btn = document.getElementById('muteButton');
+  if (!btn) return;
+  btn.textContent = isMuted ? '🔇' : '🔊';
+  btn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  saveMuteSetting();
+  updateMuteButton();
+}
+
+function loadPlayCount() {
+  try {
+    playCount = Number(localStorage.getItem('tushiriPlayCount') || 0);
+  } catch (e) {
+    playCount = 0;
+  }
+}
+
+function savePlayCount() {
+  try {
+    localStorage.setItem('tushiriPlayCount', String(playCount));
+  } catch (e) {
+    // ignore
+  }
+}
+
+function updatePlayCountDisplay() {
+  const el = document.getElementById('playCount');
+  if (el) el.textContent = String(playCount);
+}
+
+function togglePause() {
+  if (gameState !== 'playing' && !isPaused) return;
+  if (!isPaused) {
+    // pause
+    isPaused = true;
+    if (animationId) cancelAnimationFrame(animationId);
+    overlay.style.display = 'grid';
+    messageElement.textContent = 'Paused - Tap to resume';
+  } else {
+    // resume
+    isPaused = false;
+    overlay.style.display = 'none';
+    messageElement.textContent = '';
+    gameLoop();
+  }
 }
 
 function setCanvasSize() {
@@ -144,6 +216,10 @@ function flap() {
   if (gameState === 'ready') {
     gameState = 'playing';
     overlay.style.display = 'none';
+    // record a play
+    playCount += 1;
+    savePlayCount();
+    updatePlayCountDisplay();
   }
 
   bird.velocity = FLAP_STRENGTH;
@@ -311,7 +387,8 @@ function gameLoop() {
 }
 
 function handleInput(event) {
-  const isRecentTap = performance.now() - lastTap < 250;
+  // allow faster repeated taps — reduce debounce window
+  const isRecentTap = performance.now() - lastTap < 80; // was 250
   lastTap = performance.now();
   if (isRecentTap) return;
   flap();
@@ -336,5 +413,13 @@ document.addEventListener('keydown', (event) => {
 
 setCanvasSize();
 loadHighScore();
+loadMuteSetting();
+updateMuteButton();
+const muteBtn = document.getElementById('muteButton');
+if (muteBtn) muteBtn.addEventListener('click', () => toggleMute());
+const pauseBtn = document.getElementById('pauseButton');
+if (pauseBtn) pauseBtn.addEventListener('click', () => togglePause());
+loadPlayCount();
+updatePlayCountDisplay();
 resetGame();
 gameLoop();
