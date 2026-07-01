@@ -8,8 +8,9 @@ const messageElement = document.getElementById('message');
 
 const GAME_WIDTH = 360;
 const GAME_HEIGHT = 640;
-const GRAVITY = 0.52; // slightly reduced gravity for gentler fall
-const FLAP_STRENGTH = -10; // standard flap strength for all taps
+const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
+const GRAVITY = IS_MOBILE ? 0.42 : 0.52; // lower gravity on mobile so the bird hangs longer in the air
+const FLAP_STRENGTH = IS_MOBILE ? -11 : -10; // slightly stronger tap on mobile so the bird travels farther
 const PIPE_SPEED = 1.9; // slower horizontal pipe speed for easier start
 const PIPE_GAP = 180; // slightly larger gap to make passing easier
 const PIPE_WIDTH = 70;
@@ -301,28 +302,42 @@ function checkCollision() {
   });
 }
 
+function lerpColor(start, end, t) {
+  const c1 = parseInt(start.slice(1), 16);
+  const c2 = parseInt(end.slice(1), 16);
+  const r = Math.round(((c1 >> 16) & 0xff) + (((c2 >> 16) & 0xff) - ((c1 >> 16) & 0xff)) * t);
+  const g = Math.round(((c1 >> 8) & 0xff) + (((c2 >> 8) & 0xff) - ((c1 >> 8) & 0xff)) * t);
+  const b = Math.round((c1 & 0xff) + ((c2 & 0xff) - (c1 & 0xff)) * t);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
 function drawBackground() {
+  const progress = Math.min(score / 10, 1);
+  const skyTop = lerpColor('#7dd3fc', '#f97316', progress);
+  const skyMid = lerpColor('#9dd6f2', '#fb7185', progress);
+  const skyBottom = lerpColor('#bae6fd', '#312e81', progress);
+
   const skyGradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-  skyGradient.addColorStop(0, '#7dd3fc');
-  skyGradient.addColorStop(0.5, '#9dd6f2');
-  skyGradient.addColorStop(1, '#bae6fd');
+  skyGradient.addColorStop(0, skyTop);
+  skyGradient.addColorStop(0.45, skyMid);
+  skyGradient.addColorStop(1, skyBottom);
   ctx.fillStyle = skyGradient;
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-  // Sun
+  // Sun / sunset
   const sunX = GAME_WIDTH - 70;
-  const sunY = 90;
-  const sunRadius = 32;
+  const sunY = 90 + progress * 120;
+  const sunRadius = 32 - progress * 8;
   const sunGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius);
-  sunGradient.addColorStop(0, '#fef08a');
-  sunGradient.addColorStop(1, '#f97316');
+  sunGradient.addColorStop(0, lerpColor('#fef08a', '#fbcf79', progress));
+  sunGradient.addColorStop(1, lerpColor('#f97316', '#991b1b', progress));
   ctx.fillStyle = sunGradient;
   ctx.beginPath();
   ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
   ctx.fill();
 
   // Clouds
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillStyle = progress < 0.6 ? 'rgba(255,255,255,0.85)' : 'rgba(255,218,193,0.85)';
   clouds.forEach(cloud => {
     ctx.beginPath();
     ctx.ellipse(cloud.x, cloud.y, cloud.width * 0.55, cloud.height, 0, 0, Math.PI * 2);
@@ -332,9 +347,9 @@ function drawBackground() {
   });
 
   // Horizon
-  ctx.fillStyle = '#dbeafe';
+  ctx.fillStyle = lerpColor('#dbeafe', '#4c1d95', progress);
   ctx.fillRect(0, GAME_HEIGHT - 140, GAME_WIDTH, 140);
-  ctx.fillStyle = '#93c5fd';
+  ctx.fillStyle = lerpColor('#93c5fd', '#1e3a8a', progress);
   ctx.fillRect(0, GAME_HEIGHT - 90, GAME_WIDTH, 90);
 }
 
